@@ -464,14 +464,11 @@ static void syncbb_scan(bool ir_scan, enum scan_type type, uint8_t *buffer, int 
 
 	dirtyjtag_buffer_flush();
 
-
-	if (type != SCAN_OUT)
+	if (type == SCAN_OUT)
+		xfer_tx[0] |= dirtyjtag_v_options[dirtyjtag_version].no_read;
+	while (scan_size > 0) 
 	{
-		xfer_tx[0] |= dirtyjtag_v_options->no_read;
-	}
-	while (scan_size > 0)
-	{
-		sent_bits = MIN(dirtyjtag_v_options->max_bits, scan_size);
+		sent_bits = MIN(dirtyjtag_v_options[dirtyjtag_version].max_bits, scan_size);
 		sent_bytes = (sent_bits + 7) / 8;
 		if (sent_bits > 255)
 		{
@@ -500,7 +497,7 @@ static void syncbb_scan(bool ir_scan, enum scan_type type, uint8_t *buffer, int 
 		res = jtag_libusb_bulk_write(usb_handle, dirtyjtag_ep_write,
 									 (char *)xfer_tx, sent_bytes + 2, DIRTYJTAG_USB_TIMEOUT, &written);
 
-		if (!dirtyjtag_v_options->no_read || (type != SCAN_OUT))
+		if (!dirtyjtag_v_options[dirtyjtag_version].no_read || (type != SCAN_OUT))
 		{
 			read = 0;
 			res = jtag_libusb_bulk_read(usb_handle, dirtyjtag_ep_read,
